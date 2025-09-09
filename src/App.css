@@ -40,7 +40,7 @@ body {
 .app-main {
   flex: 1;
   padding: 2rem;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   width: 100%;
 }
@@ -59,6 +59,10 @@ button {
 .btn-add {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 2px solid transparent;
 }
 
 .btn-add:hover {
@@ -110,9 +114,15 @@ button {
   padding: 0.5rem 1rem;
   border-radius: 5px;
   text-decoration: none;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 2px solid #667eea;
   transition: all 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+  height: 37px;
+  box-sizing: border-box;
 }
 
 .btn-back:hover {
@@ -137,11 +147,25 @@ button {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .app-main {
+  .app-header {
     padding: 1rem;
   }
 
   .app-header h1 {
     font-size: 1.5rem;
+  }
+
+  .app-main {
+    padding: 1rem 0.5rem;
+  }
+
+  button {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .btn-back {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
   }
 }

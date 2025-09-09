@@ -9,6 +9,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -30,9 +31,9 @@
 
 .navigation-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
@@ -95,12 +96,33 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .homepage h2 {
-    font-size: 2rem;
+  .homepage {
+    padding: 1rem;
   }
-  
+
+  .homepage h2 {
+    font-size: 1.8rem;
+  }
+
+  .homepage p {
+    font-size: 1rem;
+  }
+
   .navigation-cards {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+    padding: 0 1rem;
+  }
+
+  .nav-card {
+    padding: 1.5rem;
+  }
+
+  .card-icon {
+    font-size: 2.5rem;
+  }
+
+  .nav-card h3 {
+    font-size: 1.3rem;
   }
 }
