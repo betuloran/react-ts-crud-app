@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { Post, User } from '../types';
 import { postAPI, userAPI } from '../services/api';
@@ -7,7 +7,7 @@ import './PostList.css';
 const PostList = () => {
   const [searchParams] = useSearchParams();
   const userIdParam = searchParams.get('userId');
-  
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,11 +19,7 @@ const PostList = () => {
     userIdParam ? parseInt(userIdParam) : null
   );
 
-  useEffect(() => {
-    fetchData();
-  }, [selectedUserId]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [postsData, usersData] = await Promise.all([
@@ -39,7 +35,11 @@ const PostList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedUserId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const getUserName = (userId: number) => {
     const user = users.find(u => u.id === userId);
@@ -88,7 +88,6 @@ const PostList = () => {
         return;
       }
       const newPost = await postAPI.create(formData);
-      // JSONPlaceholder always returns id: 101 for new posts, so we create a unique ID
       const uniquePost = { ...newPost, id: Math.max(...posts.map(p => p.id)) + 1 };
       setPosts([uniquePost, ...posts]);
       setShowAddForm(false);
@@ -127,8 +126,8 @@ const PostList = () => {
 
       <div className="filter-section">
         <label>Filter by User: </label>
-        <select 
-          value={selectedUserId || ''} 
+        <select
+          value={selectedUserId || ''}
           onChange={(e) => handleUserFilter(e.target.value ? parseInt(e.target.value) : null)}
           className="user-filter"
         >
