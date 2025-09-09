@@ -1,0 +1,251 @@
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import type { Post, User } from '../types';
+import { postAPI, userAPI } from '../services/api';
+import './PostList.css';
+
+const PostList = () => {
+  const [searchParams] = useSearchParams();
+  const userIdParam = searchParams.get('userId');
+  
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [editingPost, setEditingPost] = useState<number | null>(null);
+  const [formData, setFormData] = useState<Partial<Post>>({});
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(
+    userIdParam ? parseInt(userIdParam) : null
+  );
+
+  useEffect(() => {
+    fetchData();
+  }, [selectedUserId]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [postsData, usersData] = await Promise.all([
+        selectedUserId ? postAPI.getByUserId(selectedUserId) : postAPI.getAll(),
+        userAPI.getAll()
+      ]);
+      setPosts(postsData);
+      setUsers(usersData);
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch data');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getUserName = (userId: number) => {
+    const user = users.find(u => u.id === userId);
+    return user ? user.name : `User ${userId}`;
+  };
+
+  const handleDelete = async (id: number) => {
+    if (window.confirm('Are you sure you want to delete this post?')) {
+      try {
+        await postAPI.delete(id);
+        setPosts(posts.filter(post => post.id !== id));
+        alert('Post deleted successfully! (Note: JSONPlaceholder simulates deletion)');
+      } catch (err) {
+        alert('Failed to delete post');
+        console.error(err);
+      }
+    }
+  };
+
+  const handleEdit = (post: Post) => {
+    setEditingPost(post.id);
+    setFormData({
+      title: post.title,
+      body: post.body,
+      userId: post.userId,
+    });
+  };
+
+  const handleUpdate = async (id: number) => {
+    try {
+      await postAPI.update(id, formData);
+      setPosts(posts.map(post => post.id === id ? { ...post, ...formData } : post));
+      setEditingPost(null);
+      setFormData({});
+      alert('Post updated successfully! (Note: JSONPlaceholder simulates update)');
+    } catch (err) {
+      alert('Failed to update post');
+      console.error(err);
+    }
+  };
+
+  const handleAdd = async () => {
+    try {
+      if (!formData.title || !formData.userId) {
+        alert('Please fill all required fields');
+        return;
+      }
+      const newPost = await postAPI.create(formData);
+      // JSONPlaceholder always returns id: 101 for new posts, so we create a unique ID
+      const uniquePost = { ...newPost, id: Math.max(...posts.map(p => p.id)) + 1 };
+      setPosts([uniquePost, ...posts]);
+      setShowAddForm(false);
+      setFormData({});
+      alert('Post added successfully! (Note: JSONPlaceholder simulates creation)');
+    } catch (err) {
+      alert('Failed to add post');
+      console.error(err);
+    }
+  };
+
+  const handleCancel = () => {
+    setEditingPost(null);
+    setShowAddForm(false);
+    setFormData({});
+  };
+
+  const handleUserFilter = (userId: number | null) => {
+    setSelectedUserId(userId);
+  };
+
+  if (loading) return <div className="loading">Loading posts...</div>;
+  if (error) return <div className="error">{error}</div>;
+
+  return (
+    <div className="post-list-container">
+      <div className="header">
+        <h2>Posts Management</h2>
+        <div className="header-actions">
+          <button onClick={() => setShowAddForm(true)} className="btn-add">
+            ➕ Add New Post
+          </button>
+          <Link to="/" className="btn-back">← Back to Home</Link>
+        </div>
+      </div>
+
+      <div className="filter-section">
+        <label>Filter by User: </label>
+        <select 
+          value={selectedUserId || ''} 
+          onChange={(e) => handleUserFilter(e.target.value ? parseInt(e.target.value) : null)}
+          className="user-filter"
+        >
+          <option value="">All Users</option>
+          {users.map(user => (
+            <option key={user.id} value={user.id}>
+              {user.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {showAddForm && (
+        <div className="add-form">
+          <h3>Add New Post</h3>
+          <select
+            value={formData.userId || ''}
+            onChange={(e) => setFormData({ ...formData, userId: parseInt(e.target.value) })}
+          >
+            <option value="">Select User</option>
+            {users.map(user => (
+              <option key={user.id} value={user.id}>
+                {user.name}
+              </option>
+            ))}
+          </select>
+          <input
+            type="text"
+            placeholder="Post Title"
+            value={formData.title || ''}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          />
+          <textarea
+            placeholder="Post Body (Optional)"
+            value={formData.body || ''}
+            onChange={(e) => setFormData({ ...formData, body: e.target.value })}
+            rows={3}
+          />
+          <div className="form-actions">
+            <button onClick={handleAdd} className="btn-save">Save</button>
+            <button onClick={handleCancel} className="btn-cancel">Cancel</button>
+          </div>
+        </div>
+      )}
+
+      <div className="table-container">
+        <table className="post-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>User</th>
+              <th>Title</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {posts.map(post => (
+              <tr key={post.id}>
+                <td>{post.id}</td>
+                <td>
+                  {editingPost === post.id ? (
+                    <select
+                      value={formData.userId || ''}
+                      onChange={(e) => setFormData({ ...formData, userId: parseInt(e.target.value) })}
+                    >
+                      {users.map(user => (
+                        <option key={user.id} value={user.id}>
+                          {user.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <Link to={`/posts?userId=${post.userId}`} className="user-link">
+                      {getUserName(post.userId)}
+                    </Link>
+                  )}
+                </td>
+                <td className="title-cell">
+                  {editingPost === post.id ? (
+                    <input
+                      type="text"
+                      value={formData.title || ''}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      className="edit-input"
+                    />
+                  ) : (
+                    post.title
+                  )}
+                </td>
+                <td className="actions">
+                  {editingPost === post.id ? (
+                    <>
+                      <button onClick={() => handleUpdate(post.id)} className="btn-save">
+                        💾 Save
+                      </button>
+                      <button onClick={handleCancel} className="btn-cancel">
+                        ❌ Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={() => handleEdit(post)} className="btn-edit">
+                        ✏️ Edit
+                      </button>
+                      <button onClick={() => handleDelete(post.id)} className="btn-delete">
+                        🗑️ Delete
+                      </button>
+                    </>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default PostList;
