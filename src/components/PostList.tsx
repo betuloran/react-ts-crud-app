@@ -3,6 +3,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import type { Post, User } from '../types';
 import { postAPI, userAPI } from '../services/api';
 import './PostList.css';
+import { FaEdit, FaPlus, FaTrash } from 'react-icons/fa';
+import { IoArrowBack } from 'react-icons/io5';
 
 const PostList = () => {
   const [searchParams] = useSearchParams();
@@ -118,9 +120,10 @@ const PostList = () => {
         <h2>Posts Management</h2>
         <div className="header-actions">
           <button onClick={() => setShowAddForm(true)} className="btn-add">
-            ➕ Add New Post
+            <FaPlus /> Add New Post
           </button>
-          <Link to="/" className="btn-back">← Back to Home</Link>
+          <Link to="/" className="btn-back">
+            <IoArrowBack /> Back to Home</Link>
         </div>
       </div>
 
@@ -230,10 +233,10 @@ const PostList = () => {
                   ) : (
                     <>
                       <button onClick={() => handleEdit(post)} className="btn-edit">
-                        ✏️ Edit
+                        <FaEdit /> Edit
                       </button>
                       <button onClick={() => handleDelete(post.id)} className="btn-delete">
-                        🗑️ Delete
+                        <FaTrash /> Delete
                       </button>
                     </>
                   )}

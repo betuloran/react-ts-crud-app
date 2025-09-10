@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import type { User } from '../types';
 import { userAPI, postAPI } from '../services/api';
 import './UserList.css';
+import { FaEdit, FaPlus, FaTrash } from 'react-icons/fa';
+import { IoArrowBack } from 'react-icons/io5';
 
 const UserList = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -69,7 +71,7 @@ const UserList = () => {
 
   const handleUpdate = async (id: number) => {
     try {
-      await userAPI.update(id, formData); 
+      await userAPI.update(id, formData);
       setUsers(users.map(user => user.id === id ? { ...user, ...formData } : user));
       setEditingUser(null);
       setFormData({});
@@ -114,9 +116,10 @@ const UserList = () => {
         <h2>Users Management</h2>
         <div className="header-actions">
           <button onClick={() => setShowAddForm(true)} className="btn-add">
-            ➕ Add New User
+            <FaPlus /> Add New User
           </button>
-          <Link to="/" className="btn-back">← Back to Home</Link>
+          <Link to="/" className="btn-back">
+            <IoArrowBack /> Back to Home</Link>
         </div>
       </div>
 
@@ -215,10 +218,10 @@ const UserList = () => {
                   ) : (
                     <>
                       <button onClick={() => handleEdit(user)} className="btn-edit">
-                        ✏️ Edit
+                        <FaEdit /> Edit
                       </button>
                       <button onClick={() => handleDelete(user.id)} className="btn-delete">
-                        🗑️ Delete
+                        <FaTrash /> Delete
                       </button>
                     </>
                   )}
