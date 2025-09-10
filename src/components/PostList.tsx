@@ -51,7 +51,7 @@ const PostList = () => {
       try {
         await postAPI.delete(id);
         setPosts(posts.filter(post => post.id !== id));
-        alert('Post deleted successfully! (Note: JSONPlaceholder simulates deletion)');
+        alert('Post deleted successfully!');
       } catch (err) {
         alert('Failed to delete post');
         console.error(err);

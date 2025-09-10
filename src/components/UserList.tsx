@@ -50,7 +50,7 @@ const UserList = () => {
       try {
         await userAPI.delete(id);
         setUsers(users.filter(user => user.id !== id));
-        alert('User deleted successfully! (Note: JSONPlaceholder simulates deletion)');
+        alert('User deleted successfully!');
       } catch (err) {
         alert('Failed to delete user');
         console.error(err);
