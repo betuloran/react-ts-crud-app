@@ -3,8 +3,9 @@ import { Link, useSearchParams } from 'react-router-dom';
 import type { Post, User } from '../types';
 import { postAPI, userAPI } from '../services/api';
 import './PostList.css';
-import { FaEdit, FaPlus, FaTrash } from 'react-icons/fa';
+import { FaEdit, FaPlus, FaTrash, FaSearch } from 'react-icons/fa';
 import { IoArrowBack } from 'react-icons/io5';
+import { LiaTimesSolid } from 'react-icons/lia';
 
 const PostList = () => {
   const [searchParams] = useSearchParams();
@@ -20,6 +21,11 @@ const PostList = () => {
   const [selectedUserId, setSelectedUserId] = useState<number | null>(
     userIdParam ? parseInt(userIdParam) : null
   );
+  const [searchTerm, setSearchTerm] = useState('');
+  useEffect(() => {
+    const userIdParam = searchParams.get('userId');
+    setSelectedUserId(userIdParam ? parseInt(userIdParam) : null);
+  }, [searchParams]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -47,6 +53,10 @@ const PostList = () => {
     const user = users.find(u => u.id === userId);
     return user ? user.name : `User ${userId}`;
   };
+
+  const filteredPosts = posts.filter(post =>
+    post.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleDelete = async (id: number) => {
     if (window.confirm('Are you sure you want to delete this post?')) {
@@ -76,7 +86,7 @@ const PostList = () => {
       setPosts(posts.map(post => post.id === id ? { ...post, ...formData } : post));
       setEditingPost(null);
       setFormData({});
-      alert('Post updated successfully! (Note: JSONPlaceholder simulates update)');
+      alert('Post updated successfully!');
     } catch (err) {
       alert('Failed to update post');
       console.error(err);
@@ -91,8 +101,8 @@ const PostList = () => {
       }
       const newPost = await postAPI.create(formData);
       const uniquePost = { ...newPost, id: Math.max(...posts.map(p => p.id)) + 1 };
-      setPosts([uniquePost, ...posts]);
-      setShowAddForm(false);
+      const updatedPosts = [...posts, uniquePost];  // Önce sona ekler.
+      setPosts(updatedPosts.sort((a, b) => a.id - b.id));  // Sonra ID'ye göre sıralar.      setShowAddForm(false);
       setFormData({});
       alert('Post added successfully!');
     } catch (err) {
@@ -127,20 +137,50 @@ const PostList = () => {
         </div>
       </div>
 
-      <div className="filter-section">
-        <label>Filter by User: </label>
-        <select
-          value={selectedUserId || ''}
-          onChange={(e) => handleUserFilter(e.target.value ? parseInt(e.target.value) : null)}
-          className="user-filter"
-        >
-          <option value="">All Users</option>
-          {users.map(user => (
-            <option key={user.id} value={user.id}>
-              {user.name}
-            </option>
-          ))}
-        </select>
+      <div className="filters-container">
+        <div className="filter-section">
+          <label>Filter by User: </label>
+          <select
+            value={selectedUserId || ''}
+            onChange={(e) => handleUserFilter(e.target.value ? parseInt(e.target.value) : null)}
+            className="user-filter"
+          >
+            <option value="">All Users</option>
+            {users.map(user => (
+              <option key={user.id} value={user.id}>
+                {user.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="search-section">
+          <div className="search-box">
+            <FaSearch className="search-icon" />
+            <input
+              type="text"
+              placeholder="Search posts by title..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="clear-search"
+                aria-label="Clear search"
+              >
+                <LiaTimesSolid />
+              </button>
+            )}
+          </div>
+          {searchTerm && (
+            <div className="search-results-info">
+              Found {filteredPosts.length} post{filteredPosts.length !== 1 ? 's' : ''}
+              {filteredPosts.length === 0 && ' - Try different keywords'}
+            </div>
+          )}
+        </div>
       </div>
 
       {showAddForm && (
@@ -187,62 +227,72 @@ const PostList = () => {
             </tr>
           </thead>
           <tbody>
-            {posts.map(post => (
-              <tr key={post.id}>
-                <td>{post.id}</td>
-                <td>
-                  {editingPost === post.id ? (
-                    <select
-                      value={formData.userId || ''}
-                      onChange={(e) => setFormData({ ...formData, userId: parseInt(e.target.value) })}
-                    >
-                      {users.map(user => (
-                        <option key={user.id} value={user.id}>
-                          {user.name}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <Link to={`/posts?userId=${post.userId}`} className="user-link">
-                      {getUserName(post.userId)}
-                    </Link>
-                  )}
-                </td>
-                <td className="title-cell">
-                  {editingPost === post.id ? (
-                    <input
-                      type="text"
-                      value={formData.title || ''}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className="edit-input"
-                    />
-                  ) : (
-                    post.title
-                  )}
-                </td>
-                <td className="actions">
-                  {editingPost === post.id ? (
-                    <>
-                      <button onClick={() => handleUpdate(post.id)} className="btn-save">
-                        💾 Save
-                      </button>
-                      <button onClick={handleCancel} className="btn-cancel">
-                        ❌ Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button onClick={() => handleEdit(post)} className="btn-edit">
-                        <FaEdit /> Edit
-                      </button>
-                      <button onClick={() => handleDelete(post.id)} className="btn-delete">
-                        <FaTrash /> Delete
-                      </button>
-                    </>
-                  )}
+            {filteredPosts.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="no-results">
+                  {searchTerm || selectedUserId
+                    ? 'No posts found matching your filters'
+                    : 'No posts available'}
                 </td>
               </tr>
-            ))}
+            ) : (
+              filteredPosts.map(post => (
+                <tr key={post.id}>
+                  <td>{post.id}</td>
+                  <td>
+                    {editingPost === post.id ? (
+                      <select
+                        value={formData.userId || ''}
+                        onChange={(e) => setFormData({ ...formData, userId: parseInt(e.target.value) })}
+                      >
+                        {users.map(user => (
+                          <option key={user.id} value={user.id}>
+                            {user.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <Link to={`/posts?userId=${post.userId}`} className="user-link">
+                        {getUserName(post.userId)}
+                      </Link>
+                    )}
+                  </td>
+                  <td className="title-cell">
+                    {editingPost === post.id ? (
+                      <input
+                        type="text"
+                        value={formData.title || ''}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        className="edit-input"
+                      />
+                    ) : (
+                      post.title
+                    )}
+                  </td>
+                  <td className="actions">
+                    {editingPost === post.id ? (
+                      <>
+                        <button onClick={() => handleUpdate(post.id)} className="btn-save">
+                          💾 Save
+                        </button>
+                        <button onClick={handleCancel} className="btn-cancel">
+                          ❌ Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button onClick={() => handleEdit(post)} className="btn-edit">
+                          <FaEdit /> Edit
+                        </button>
+                        <button onClick={() => handleDelete(post.id)} className="btn-delete">
+                          <FaTrash /> Delete
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

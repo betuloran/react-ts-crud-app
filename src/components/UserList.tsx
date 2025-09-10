@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import type { User } from '../types';
 import { userAPI, postAPI } from '../services/api';
 import './UserList.css';
-import { FaEdit, FaPlus, FaTrash } from 'react-icons/fa';
+import { FaEdit, FaPlus, FaTrash, FaSearch } from 'react-icons/fa';
 import { IoArrowBack } from 'react-icons/io5';
+import { LiaTimesSolid } from 'react-icons/lia';
 
 const UserList = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -14,6 +15,7 @@ const UserList = () => {
   const [formData, setFormData] = useState<Partial<User>>({});
   const [showAddForm, setShowAddForm] = useState(false);
   const [userPosts, setUserPosts] = useState<{ [key: number]: number }>({});
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchUsers();
@@ -47,6 +49,13 @@ const UserList = () => {
     }
   };
 
+  // Filter users based on search term
+  const filteredUsers = users.filter(user =>
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const handleDelete = async (id: number) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
@@ -75,7 +84,7 @@ const UserList = () => {
       setUsers(users.map(user => user.id === id ? { ...user, ...formData } : user));
       setEditingUser(null);
       setFormData({});
-      alert('User updated successfully! (Note: JSONPlaceholder simulates update)');
+      alert('User updated successfully!');
     } catch (err) {
       alert('Failed to update user');
       console.error(err);
@@ -123,6 +132,34 @@ const UserList = () => {
         </div>
       </div>
 
+      <div className="search-section">
+        <div className="search-box">
+          <FaSearch className="search-icon" />
+          <input
+            type="text"
+            placeholder="Search by name, username or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="clear-search"
+              aria-label="Clear search"
+            >
+              <LiaTimesSolid/>
+            </button>
+          )}
+        </div>
+        {searchTerm && (
+          <div className="search-results-info">
+            Found {filteredUsers.length} user{filteredUsers.length !== 1 ? 's' : ''}
+            {filteredUsers.length === 0 && ' - Try different keywords'}
+          </div>
+        )}
+    </div>
+
       {showAddForm && (
         <div className="add-form">
           <h3>Add New User</h3>
@@ -164,70 +201,78 @@ const UserList = () => {
             </tr>
           </thead>
           <tbody>
-            {users.map(user => (
-              <tr key={user.id}>
-                <td>{user.id}</td>
-                <td>
-                  {editingUser === user.id ? (
-                    <input
-                      type="text"
-                      value={formData.name || ''}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    />
-                  ) : (
-                    user.name
-                  )}
-                </td>
-                <td>
-                  {editingUser === user.id ? (
-                    <input
-                      type="text"
-                      value={formData.username || ''}
-                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    />
-                  ) : (
-                    user.username
-                  )}
-                </td>
-                <td>
-                  {editingUser === user.id ? (
-                    <input
-                      type="email"
-                      value={formData.email || ''}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    />
-                  ) : (
-                    user.email
-                  )}
-                </td>
-                <td>
-                  <Link to={`/posts?userId=${user.id}`} className="posts-link">
-                    {userPosts[user.id] || 0} posts
-                  </Link>
-                </td>
-                <td className="actions">
-                  {editingUser === user.id ? (
-                    <>
-                      <button onClick={() => handleUpdate(user.id)} className="btn-save">
-                        💾 Save
-                      </button>
-                      <button onClick={handleCancel} className="btn-cancel">
-                        ❌ Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button onClick={() => handleEdit(user)} className="btn-edit">
-                        <FaEdit /> Edit
-                      </button>
-                      <button onClick={() => handleDelete(user.id)} className="btn-delete">
-                        <FaTrash /> Delete
-                      </button>
-                    </>
-                  )}
+            {filteredUsers.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="no-results">
+                  {searchTerm ? 'No users found matching your search' : 'No users available'}
                 </td>
               </tr>
-            ))}
+            ) : (
+              filteredUsers.map(user => (
+                <tr key={user.id}>
+                  <td>{user.id}</td>
+                  <td>
+                    {editingUser === user.id ? (
+                      <input
+                        type="text"
+                        value={formData.name || ''}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      />
+                    ) : (
+                      user.name
+                    )}
+                  </td>
+                  <td>
+                    {editingUser === user.id ? (
+                      <input
+                        type="text"
+                        value={formData.username || ''}
+                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                      />
+                    ) : (
+                      user.username
+                    )}
+                  </td>
+                  <td>
+                    {editingUser === user.id ? (
+                      <input
+                        type="email"
+                        value={formData.email || ''}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      />
+                    ) : (
+                      user.email
+                    )}
+                  </td>
+                  <td>
+                    <Link to={`/posts?userId=${user.id}`} className="posts-link">
+                      {userPosts[user.id] || 0} posts
+                    </Link>
+                  </td>
+                  <td className="actions">
+                    {editingUser === user.id ? (
+                      <>
+                        <button onClick={() => handleUpdate(user.id)} className="btn-save">
+                          💾 Save
+                        </button>
+                        <button onClick={handleCancel} className="btn-cancel">
+                          ❌ Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button onClick={() => handleEdit(user)} className="btn-edit">
+                          <FaEdit /> Edit
+                        </button>
+                        <button onClick={() => handleDelete(user.id)} className="btn-delete">
+                          <FaTrash /> Delete
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

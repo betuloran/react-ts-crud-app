@@ -39,14 +39,19 @@
 .header-actions {
   display: flex;
   gap: 1rem;
-  align-items: center;
+  align-items: stretch;
   flex-wrap: wrap;
 }
 
 .header-actions button,
 .header-actions a {
-  min-width: 150px;
+  min-width: 160px;
   text-align: center;
+  height: 37px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 .add-form {
@@ -161,6 +166,73 @@
 .actions button {
   padding: 0.4rem 0.8rem;
   font-size: 0.85rem;
+}
+
+.search-section {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  color: #999;
+  font-size: 1rem;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 3rem;
+  padding-left: 2.5rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.clear-search {
+  position: absolute;
+  right: 0.5rem;
+  background: transparent;
+  border: none;
+  color: #999;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: color 0.3s ease;
+  min-width: auto;
+  height: auto;
+}
+
+.clear-search:hover {
+  color: #333;
+  background: transparent;
+}
+
+.search-results-info {
+  margin-top: 0.5rem;
+  color: #666;
+  font-size: 0.9rem;
+  text-align: center;
 }
 
 /* Responsive Design */
