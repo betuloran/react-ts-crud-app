@@ -94,7 +94,7 @@ const UserList = () => {
       setUsers([...users, uniqueUser]);
       setShowAddForm(false);
       setFormData({});
-      alert('User added successfully! (Note: JSONPlaceholder simulates creation)');
+      alert('User added successfully!');
     } catch (err) {
       alert('Failed to add user');
       console.error(err);

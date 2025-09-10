@@ -94,7 +94,7 @@ const PostList = () => {
       setPosts([uniquePost, ...posts]);
       setShowAddForm(false);
       setFormData({});
-      alert('Post added successfully! (Note: JSONPlaceholder simulates creation)');
+      alert('Post added successfully!');
     } catch (err) {
       alert('Failed to add post');
       console.error(err);
