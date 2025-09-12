@@ -1,69 +1,98 @@
-# React + TypeScript + Vite
+# Frontend Assignment - React + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Bu proje, React, TypeScript ve Vite kullanılarak geliştirilmiş bir frontend uygulamasıdır. JSONPlaceholder API'sinden veri çekerek kullanıcı ve post yönetimi sağlar.
 
-Currently, two official plugins are available:
+## Özellikler
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Kullanıcı Yönetimi**: Kullanıcıları listeleme, ekleme, düzenleme ve silme
+- **Post Yönetimi**: Postları listeleme, ekleme, düzenleme ve silme
+- **İlişki Yönetimi**: Kullanıcılar ve postlar arasında userId ile ilişki kurma
+- **Responsive Tasarım**: Modern ve kullanıcı dostu arayüz
+- **TypeScript**: Tip güvenliği sağlanmış
+- **ESLint**: Kod kalitesi kontrolü
 
-## Expanding the ESLint configuration
+## Teknolojiler
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- React 19.1.1
+- TypeScript 5.8.3
+- Vite 7.1.2
+- React Router DOM 7.8.2
+- Axios 1.11.0
+- React Icons 5.5.0
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Kurulum ve Çalıştırma
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+### Gereksinimler
+- Node.js (v18 veya üzeri)
+- npm veya yarn
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Adımlar
+
+1. **Projeyi klonlayın:**
+   ```bash
+   git clone <repository-url>
+   cd frontend
+   ```
+
+2. **Bağımlılıkları yükleyin:**
+   ```bash
+   npm install
+   ```
+
+3. **Geliştirme sunucusunu başlatın:**
+   ```bash
+   npm run dev
+   ```
+
+4. **Tarayıcıda açın:**
+   ```
+   http://localhost:5173
+   ```
+
+### Diğer Komutlar
+
+- **Build:** `npm run build`
+- **Lint:** `npm run lint`
+- **Preview:** `npm run preview`
+
+## Proje Yapısı
+
+```
+src/
+├── components/          # React bileşenleri
+│   ├── Homepage.tsx    # Ana sayfa
+│   ├── UserList.tsx    # Kullanıcı listesi
+│   └── PostList.tsx    # Post listesi
+├── services/           # API servisleri
+│   └── api.ts         # JSONPlaceholder API çağrıları
+├── types.ts           # TypeScript tip tanımları
+├── App.tsx            # Ana uygulama bileşeni
+└── main.tsx          # Uygulama giriş noktası
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## API Endpoints
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Bu uygulama JSONPlaceholder API'sini kullanır:
+- **Users:** `https://jsonplaceholder.typicode.com/users`
+- **Posts:** `https://jsonplaceholder.typicode.com/posts`
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Özellikler Detayı
+
+### Kullanıcı Yönetimi
+- Tüm kullanıcıları listeleme
+- Yeni kullanıcı ekleme
+- Kullanıcı bilgilerini düzenleme
+- Kullanıcı silme
+- Her kullanıcının post sayısını gösterme
+
+### Post Yönetimi
+- Tüm postları listeleme
+- Kullanıcıya göre filtreleme
+- Yeni post ekleme
+- Post düzenleme
+- Post silme
+- Kullanıcı-post ilişkisi görüntüleme
+
+## Lisans
+
+Bu proje eğitim amaçlı geliştirilmiştir.
