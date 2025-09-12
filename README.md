@@ -2,6 +2,10 @@
 
 Bu proje, React, TypeScript ve Vite kullanılarak geliştirilmiş bir frontend uygulamasıdır. JSONPlaceholder API'sinden veri çekerek kullanıcı ve post yönetimi sağlar.
 
+## Live Demo
+
+[React TS CRUD App Live Demo](https://react-ts-crud-app.vercel.app/)
+
 ## Özellikler
 
 - **Kullanıcı Yönetimi**: Kullanıcıları listeleme, ekleme, düzenleme ve silme
