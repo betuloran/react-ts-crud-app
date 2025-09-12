@@ -12,12 +12,16 @@ import Toast from './Toast';
 const PostList = () => {
   const [searchParams] = useSearchParams();
   const userIdParam = searchParams.get('userId');
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const [editingPost, setEditingPost] = useState<number | null>(null);
-  const [formData, setFormData] = useState<Partial<Post>>({});
+  const [editFormData, setEditFormData] = useState<Partial<Post>>({});
+  const [addFormData, setAddFormData] = useState<Partial<Post>>({});
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(
     userIdParam ? parseInt(userIdParam) : null
@@ -28,7 +32,7 @@ const PostList = () => {
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; postId: number | null }>({
     isOpen: false,
     postId: null
-  })
+  });
 
   useEffect(() => {
     const userIdParam = searchParams.get('userId');
@@ -74,11 +78,9 @@ const PostList = () => {
     if (deleteModal.postId) {
       try {
         const post = posts.find(p => p.id === deleteModal.postId);
-
         if (!post?.isLocal) {
           await postAPI.delete(deleteModal.postId);
         }
-
         setPosts(posts.filter(post => post.id !== deleteModal.postId));
         setToast({ show: true, message: 'Post deleted successfully!', type: 'success' });
       } catch (err) {
@@ -91,26 +93,25 @@ const PostList = () => {
 
   const handleEdit = (post: Post) => {
     setEditingPost(post.id);
-    setFormData({
+    setEditFormData({
       title: post.title,
       body: post.body,
       userId: post.userId,
     });
+    setShowAddForm(false);
   };
 
   const handleUpdate = async (id: number) => {
     try {
       const post = posts.find(p => p.id === id);
-
       if (post?.isLocal) {
-        setPosts(posts.map(p => p.id === id ? { ...p, ...formData } : p));
+        setPosts(posts.map(p => p.id === id ? { ...p, ...editFormData } : p));
       } else {
-        await postAPI.update(id, formData);
-        setPosts(posts.map(p => p.id === id ? { ...p, ...formData } : p));
+        await postAPI.update(id, editFormData);
+        setPosts(posts.map(p => p.id === id ? { ...p, ...editFormData } : p));
       }
-
       setEditingPost(null);
-      setFormData({});
+      setEditFormData({});
       setToast({ show: true, message: 'Post updated successfully!', type: 'success' });
     } catch (err) {
       setToast({ show: true, message: 'Failed to update post', type: 'error' });
@@ -120,11 +121,11 @@ const PostList = () => {
 
   const handleAdd = async () => {
     try {
-      if (!formData.title || !formData.userId) {
+      if (!addFormData.title || !addFormData.userId) {
         setToast({ show: true, message: 'Please fill all required fields', type: 'error' });
         return;
       }
-      const newPost = await postAPI.create(formData);
+      const newPost = await postAPI.create(addFormData);
       const uniquePost = {
         ...newPost,
         id: Math.max(...posts.map(p => p.id)) + 1,
@@ -133,7 +134,7 @@ const PostList = () => {
       const updatedPosts = [...posts, uniquePost];
       setPosts(updatedPosts.sort((a, b) => a.id - b.id));
       setShowAddForm(false);
-      setFormData({});
+      setAddFormData({});
       setToast({ show: true, message: 'Post added successfully!', type: 'success' });
     } catch (err) {
       setToast({ show: true, message: 'Failed to add post', type: 'error' });
@@ -144,7 +145,8 @@ const PostList = () => {
   const handleCancel = () => {
     setEditingPost(null);
     setShowAddForm(false);
-    setFormData({});
+    setAddFormData({});
+    setEditFormData({});
   };
 
   const handleUserFilter = (userId: number | null) => {
@@ -159,11 +161,18 @@ const PostList = () => {
       <div className="header">
         <h2>Posts Management</h2>
         <div className="header-actions">
-          <button onClick={() => setShowAddForm(true)} className="btn-add">
+          <button
+            onClick={() => {
+              setShowAddForm(true);
+              setEditingPost(null); 
+            }}
+            className="btn-add"
+          >
             <FaPlus style={{ marginRight: '0.5rem' }} /> Add New Post
           </button>
           <Link to="/" className="btn-back">
-            <IoArrowBack style={{ marginRight: '0.4rem' }} /> Back to Home</Link>
+            <IoArrowBack style={{ marginRight: '0.4rem' }} /> Back to Home
+          </Link>
         </div>
       </div>
 
@@ -217,8 +226,8 @@ const PostList = () => {
         <div className="add-form">
           <h3>Add New Post</h3>
           <select
-            value={formData.userId || ''}
-            onChange={(e) => setFormData({ ...formData, userId: parseInt(e.target.value) })}
+            value={addFormData.userId || ''}
+            onChange={(e) => setAddFormData({ ...addFormData, userId: parseInt(e.target.value) })}
           >
             <option value="">Select User</option>
             {users.map(user => (
@@ -230,13 +239,13 @@ const PostList = () => {
           <input
             type="text"
             placeholder="Post Title"
-            value={formData.title || ''}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            value={addFormData.title || ''}
+            onChange={(e) => setAddFormData({ ...addFormData, title: e.target.value })}
           />
           <textarea
             placeholder="Post Body"
-            value={formData.body || ''}
-            onChange={(e) => setFormData({ ...formData, body: e.target.value })}
+            value={addFormData.body || ''}
+            onChange={(e) => setAddFormData({ ...addFormData, body: e.target.value })}
             rows={3}
           />
           <div className="form-actions">
@@ -272,8 +281,8 @@ const PostList = () => {
                   <td>
                     {editingPost === post.id ? (
                       <select
-                        value={formData.userId || ''}
-                        onChange={(e) => setFormData({ ...formData, userId: parseInt(e.target.value) })}
+                        value={editFormData.userId || ''}
+                        onChange={(e) => setEditFormData({ ...editFormData, userId: parseInt(e.target.value) })}
                       >
                         {users.map(user => (
                           <option key={user.id} value={user.id}>
@@ -291,8 +300,8 @@ const PostList = () => {
                     {editingPost === post.id ? (
                       <input
                         type="text"
-                        value={formData.title || ''}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        value={editFormData.title || ''}
+                        onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
                         className="edit-input"
                       />
                     ) : (
@@ -325,6 +334,7 @@ const PostList = () => {
             )}
           </tbody>
         </table>
+
         <Modal
           isOpen={deleteModal.isOpen}
           title="Delete Post"
@@ -334,6 +344,7 @@ const PostList = () => {
           confirmText="Delete"
           cancelText="Cancel"
         />
+
         {toast?.show && (
           <Toast
             message={toast.message}

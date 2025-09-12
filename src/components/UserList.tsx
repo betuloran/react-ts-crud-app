@@ -13,12 +13,17 @@ const UserList = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const [editingUser, setEditingUser] = useState<number | null>(null);
-  const [formData, setFormData] = useState<Partial<User>>({});
+  const [editFormData, setEditFormData] = useState<Partial<User>>({});
+  const [addFormData, setAddFormData] = useState<Partial<User>>({});
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [userPosts, setUserPosts] = useState<{ [key: number]: number }>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  const [emailError, setEmailError] = useState<string>('');
 
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; userId: number | null }>({
     isOpen: false,
@@ -57,7 +62,11 @@ const UserList = () => {
     }
   };
 
-  // Filter users based on search term
+  const validateEmail = (email: string): boolean => {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailPattern.test(email);
+  };
+
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -82,51 +91,67 @@ const UserList = () => {
     setDeleteModal({ isOpen: false, userId: null });
   };
 
-
   const handleEdit = (user: User) => {
     setEditingUser(user.id);
-    setFormData({
+    setEditFormData({
       name: user.name,
       username: user.username,
       email: user.email,
     });
+    setEmailError('');
+    setShowAddForm(false);
   };
 
   const handleUpdate = async (id: number) => {
     try {
+      if (!editFormData.email || !validateEmail(editFormData.email)) {
+        setEmailError('Please enter a valid email address (must contain @gmail.com)');
+        setToast({ show: true, message: 'Invalid email format', type: 'error' });
+        return;
+      }
+
       const user = users.find(u => u.id === id);
 
       if (user?.isLocal) {
-        setUsers(users.map(u => u.id === id ? { ...u, ...formData } : u));
+        setUsers(users.map(u => u.id === id ? { ...u, ...editFormData } : u));
       } else {
-        await userAPI.update(id, formData);
-        setUsers(users.map(u => u.id === id ? { ...u, ...formData } : u));
+        await userAPI.update(id, editFormData);
+        setUsers(users.map(u => u.id === id ? { ...u, ...editFormData } : u));
       }
 
       setEditingUser(null);
-      setFormData({});
+      setEditFormData({});
+      setEmailError('');
       setToast({ show: true, message: 'User updated successfully!', type: 'success' });
     } catch (err) {
       setToast({ show: true, message: 'Failed to update user', type: 'error' });
       console.error(err);
     }
   };
+
   const handleAdd = async () => {
     try {
-      if (!formData.name || !formData.username || !formData.email) {
+      if (!addFormData.name || !addFormData.username || !addFormData.email) {
         setToast({ show: true, message: 'Please fill all required fields', type: 'error' });
         return;
       }
-      const newUser = await userAPI.create(formData);
+
+      if (!validateEmail(addFormData.email)) {
+        setEmailError('Please enter a valid email address (must contain @gmail.com)');
+        setToast({ show: true, message: 'Invalid email format', type: 'error' });
+        return;
+      }
+
+      const newUser = await userAPI.create(addFormData);
       const uniqueUser = {
         ...newUser,
         id: Math.max(...users.map(u => u.id)) + 1,
         isLocal: true
       };
-      const updatedUsers = [...users, uniqueUser];
-      setUsers(updatedUsers.sort((a, b) => a.id - b.id));
+      setUsers([...users, uniqueUser]);
       setShowAddForm(false);
-      setFormData({});
+      setAddFormData({});
+      setEmailError('');
       setToast({ show: true, message: 'User added successfully!', type: 'success' });
     } catch (err) {
       setToast({ show: true, message: 'Failed to add user', type: 'error' });
@@ -137,7 +162,9 @@ const UserList = () => {
   const handleCancel = () => {
     setEditingUser(null);
     setShowAddForm(false);
-    setFormData({});
+    setAddFormData({});
+    setEditFormData({});
+    setEmailError('');
   };
 
   if (loading) return <div className="loading">Loading users...</div>;
@@ -152,7 +179,8 @@ const UserList = () => {
             <FaPlus style={{ marginRight: '0.5rem' }} /> Add New User
           </button>
           <Link to="/" className="btn-back">
-            <IoArrowBack style={{ marginRight: '0.4rem' }} /> Back to Home</Link>
+            <IoArrowBack style={{ marginRight: '0.4rem' }} /> Back to Home
+          </Link>
         </div>
       </div>
 
@@ -190,21 +218,25 @@ const UserList = () => {
           <input
             type="text"
             placeholder="Name"
-            value={formData.name || ''}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            value={addFormData.name || ''}
+            onChange={(e) => setAddFormData({ ...addFormData, name: e.target.value })}
           />
           <input
             type="text"
             placeholder="Username"
-            value={formData.username || ''}
-            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+            value={addFormData.username || ''}
+            onChange={(e) => setAddFormData({ ...addFormData, username: e.target.value })}
           />
-          <input
-            type="email"
-            placeholder="Email"
-            value={formData.email || ''}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          />
+          <div className="input-wrapper">
+            <input
+              type="email"
+              placeholder="Email"
+              value={addFormData.email || ''}
+              onChange={(e) => setAddFormData({ ...addFormData, email: e.target.value })}
+              className={emailError ? 'input-error' : ''}
+            />
+            {emailError && <span className="error-message">{emailError}</span>}
+          </div>
           <div className="form-actions">
             <button onClick={handleAdd} className="btn-save">Save</button>
             <button onClick={handleCancel} className="btn-cancel">Cancel</button>
@@ -239,8 +271,8 @@ const UserList = () => {
                     {editingUser === user.id ? (
                       <input
                         type="text"
-                        value={formData.name || ''}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        value={editFormData.name || ''}
+                        onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
                       />
                     ) : (
                       user.name
@@ -250,8 +282,8 @@ const UserList = () => {
                     {editingUser === user.id ? (
                       <input
                         type="text"
-                        value={formData.username || ''}
-                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                        value={editFormData.username || ''}
+                        onChange={(e) => setEditFormData({ ...editFormData, username: e.target.value })}
                       />
                     ) : (
                       user.username
@@ -259,11 +291,15 @@ const UserList = () => {
                   </td>
                   <td>
                     {editingUser === user.id ? (
-                      <input
-                        type="email"
-                        value={formData.email || ''}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      />
+                      <div className="input-wrapper">
+                        <input
+                          type="email"
+                          value={editFormData.email || ''}
+                          onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                          className={emailError ? 'input-error' : ''}
+                        />
+                        {emailError && <span className="error-message">{emailError}</span>}
+                      </div>
                     ) : (
                       user.email
                     )}
@@ -299,6 +335,7 @@ const UserList = () => {
             )}
           </tbody>
         </table>
+
         <Modal
           isOpen={deleteModal.isOpen}
           title="Delete User"
@@ -308,6 +345,7 @@ const UserList = () => {
           confirmText="Delete"
           cancelText="Cancel"
         />
+
         {toast?.show && (
           <Toast
             message={toast.message}
