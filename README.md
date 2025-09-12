@@ -34,7 +34,7 @@ Bu proje, React, TypeScript ve Vite kullanılarak geliştirilmiş bir frontend u
 
 1. **Projeyi klonlayın:**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/betuloran/react-ts-crud-app.git
    cd frontend
    ```
 
