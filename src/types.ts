@@ -5,6 +5,7 @@ export interface User {
   email: string;
   phone?: string;
   website?: string;
+  isLocal?: boolean;
   company?: {
     name: string;
     catchPhrase: string;
@@ -21,12 +22,12 @@ export interface User {
     };
   };
 }
-
 export interface Post {
   userId: number;
   id: number;
   title: string;
   body?: string;
+  isLocal?: boolean;
 }
 
 export interface FormData {

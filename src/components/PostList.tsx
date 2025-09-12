@@ -3,14 +3,15 @@ import { Link, useSearchParams } from 'react-router-dom';
 import type { Post, User } from '../types';
 import { postAPI, userAPI } from '../services/api';
 import './PostList.css';
-import { FaEdit, FaPlus, FaTrash, FaSearch } from 'react-icons/fa';
+import { FaEdit, FaPlus, FaTrash, FaSearch, FaSave, FaTimes } from 'react-icons/fa';
 import { IoArrowBack } from 'react-icons/io5';
 import { LiaTimesSolid } from 'react-icons/lia';
+import Modal from './Modal';
+import Toast from './Toast';
 
 const PostList = () => {
   const [searchParams] = useSearchParams();
   const userIdParam = searchParams.get('userId');
-
   const [posts, setPosts] = useState<Post[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,6 +23,13 @@ const PostList = () => {
     userIdParam ? parseInt(userIdParam) : null
   );
   const [searchTerm, setSearchTerm] = useState('');
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; postId: number | null }>({
+    isOpen: false,
+    postId: null
+  })
+
   useEffect(() => {
     const userIdParam = searchParams.get('userId');
     setSelectedUserId(userIdParam ? parseInt(userIdParam) : null);
@@ -58,17 +66,27 @@ const PostList = () => {
     post.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Are you sure you want to delete this post?')) {
+  const handleDelete = (id: number) => {
+    setDeleteModal({ isOpen: true, postId: id });
+  };
+
+  const confirmDelete = async () => {
+    if (deleteModal.postId) {
       try {
-        await postAPI.delete(id);
-        setPosts(posts.filter(post => post.id !== id));
-        alert('Post deleted successfully!');
+        const post = posts.find(p => p.id === deleteModal.postId);
+
+        if (!post?.isLocal) {
+          await postAPI.delete(deleteModal.postId);
+        }
+
+        setPosts(posts.filter(post => post.id !== deleteModal.postId));
+        setToast({ show: true, message: 'Post deleted successfully!', type: 'success' });
       } catch (err) {
-        alert('Failed to delete post');
+        setToast({ show: true, message: 'Failed to delete post', type: 'error' });
         console.error(err);
       }
     }
+    setDeleteModal({ isOpen: false, postId: null });
   };
 
   const handleEdit = (post: Post) => {
@@ -82,13 +100,20 @@ const PostList = () => {
 
   const handleUpdate = async (id: number) => {
     try {
-      await postAPI.update(id, formData);
-      setPosts(posts.map(post => post.id === id ? { ...post, ...formData } : post));
+      const post = posts.find(p => p.id === id);
+
+      if (post?.isLocal) {
+        setPosts(posts.map(p => p.id === id ? { ...p, ...formData } : p));
+      } else {
+        await postAPI.update(id, formData);
+        setPosts(posts.map(p => p.id === id ? { ...p, ...formData } : p));
+      }
+
       setEditingPost(null);
       setFormData({});
-      alert('Post updated successfully!');
+      setToast({ show: true, message: 'Post updated successfully!', type: 'success' });
     } catch (err) {
-      alert('Failed to update post');
+      setToast({ show: true, message: 'Failed to update post', type: 'error' });
       console.error(err);
     }
   };
@@ -96,17 +121,22 @@ const PostList = () => {
   const handleAdd = async () => {
     try {
       if (!formData.title || !formData.userId) {
-        alert('Please fill all required fields');
+        setToast({ show: true, message: 'Please fill all required fields', type: 'error' });
         return;
       }
       const newPost = await postAPI.create(formData);
-      const uniquePost = { ...newPost, id: Math.max(...posts.map(p => p.id)) + 1 };
-      const updatedPosts = [...posts, uniquePost];  // Önce sona ekler.
-      setPosts(updatedPosts.sort((a, b) => a.id - b.id));  // Sonra ID'ye göre sıralar.      setShowAddForm(false);
+      const uniquePost = {
+        ...newPost,
+        id: Math.max(...posts.map(p => p.id)) + 1,
+        isLocal: true
+      };
+      const updatedPosts = [...posts, uniquePost];
+      setPosts(updatedPosts.sort((a, b) => a.id - b.id));
+      setShowAddForm(false);
       setFormData({});
-      alert('Post added successfully!');
+      setToast({ show: true, message: 'Post added successfully!', type: 'success' });
     } catch (err) {
-      alert('Failed to add post');
+      setToast({ show: true, message: 'Failed to add post', type: 'error' });
       console.error(err);
     }
   };
@@ -130,10 +160,10 @@ const PostList = () => {
         <h2>Posts Management</h2>
         <div className="header-actions">
           <button onClick={() => setShowAddForm(true)} className="btn-add">
-            <FaPlus /> Add New Post
+            <FaPlus style={{ marginRight: '0.5rem' }} /> Add New Post
           </button>
           <Link to="/" className="btn-back">
-            <IoArrowBack /> Back to Home</Link>
+            <IoArrowBack style={{ marginRight: '0.4rem' }} /> Back to Home</Link>
         </div>
       </div>
 
@@ -204,7 +234,7 @@ const PostList = () => {
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           />
           <textarea
-            placeholder="Post Body (Optional)"
+            placeholder="Post Body"
             value={formData.body || ''}
             onChange={(e) => setFormData({ ...formData, body: e.target.value })}
             rows={3}
@@ -273,10 +303,10 @@ const PostList = () => {
                     {editingPost === post.id ? (
                       <>
                         <button onClick={() => handleUpdate(post.id)} className="btn-save">
-                          💾 Save
+                          <FaSave /> Save
                         </button>
                         <button onClick={handleCancel} className="btn-cancel">
-                          ❌ Cancel
+                          <FaTimes /> Cancel
                         </button>
                       </>
                     ) : (
@@ -295,6 +325,22 @@ const PostList = () => {
             )}
           </tbody>
         </table>
+        <Modal
+          isOpen={deleteModal.isOpen}
+          title="Delete Post"
+          message={`Are you sure you want to delete this post? This action cannot be undone.`}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteModal({ isOpen: false, postId: null })}
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
+        {toast?.show && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        )}
       </div>
     </div>
   );

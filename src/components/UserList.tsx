@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import type { User } from '../types';
 import { userAPI, postAPI } from '../services/api';
 import './UserList.css';
-import { FaEdit, FaPlus, FaTrash, FaSearch } from 'react-icons/fa';
+import { FaEdit, FaPlus, FaTrash, FaSearch, FaSave, FaTimes } from 'react-icons/fa';
 import { IoArrowBack } from 'react-icons/io5';
 import { LiaTimesSolid } from 'react-icons/lia';
+import Modal from './Modal';
+import Toast from './Toast';
 
 const UserList = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -16,6 +18,12 @@ const UserList = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [userPosts, setUserPosts] = useState<{ [key: number]: number }>({});
   const [searchTerm, setSearchTerm] = useState('');
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; userId: number | null }>({
+    isOpen: false,
+    userId: null
+  });
 
   useEffect(() => {
     fetchUsers();
@@ -56,18 +64,24 @@ const UserList = () => {
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
+  const handleDelete = (id: number) => {
+    setDeleteModal({ isOpen: true, userId: id });
+  };
+
+  const confirmDelete = async () => {
+    if (deleteModal.userId) {
       try {
-        await userAPI.delete(id);
-        setUsers(users.filter(user => user.id !== id));
-        alert('User deleted successfully!');
+        await userAPI.delete(deleteModal.userId);
+        setUsers(users.filter(user => user.id !== deleteModal.userId));
+        setToast({ show: true, message: 'User deleted successfully!', type: 'success' });
       } catch (err) {
-        alert('Failed to delete user');
+        setToast({ show: true, message: 'Failed to delete user', type: 'error' });
         console.error(err);
       }
     }
+    setDeleteModal({ isOpen: false, userId: null });
   };
+
 
   const handleEdit = (user: User) => {
     setEditingUser(user.id);
@@ -80,32 +94,42 @@ const UserList = () => {
 
   const handleUpdate = async (id: number) => {
     try {
-      await userAPI.update(id, formData);
-      setUsers(users.map(user => user.id === id ? { ...user, ...formData } : user));
+      const user = users.find(u => u.id === id);
+
+      if (user?.isLocal) {
+        setUsers(users.map(u => u.id === id ? { ...u, ...formData } : u));
+      } else {
+        await userAPI.update(id, formData);
+        setUsers(users.map(u => u.id === id ? { ...u, ...formData } : u));
+      }
+
       setEditingUser(null);
       setFormData({});
-      alert('User updated successfully!');
+      setToast({ show: true, message: 'User updated successfully!', type: 'success' });
     } catch (err) {
-      alert('Failed to update user');
+      setToast({ show: true, message: 'Failed to update user', type: 'error' });
       console.error(err);
     }
   };
-
   const handleAdd = async () => {
     try {
       if (!formData.name || !formData.username || !formData.email) {
-        alert('Please fill all required fields');
+        setToast({ show: true, message: 'Please fill all required fields', type: 'error' });
         return;
       }
       const newUser = await userAPI.create(formData);
-      // JSONPlaceholder always returns id: 11 for new users, so we create a unique ID
-      const uniqueUser = { ...newUser, id: Math.max(...users.map(u => u.id)) + 1 };
-      setUsers([...users, uniqueUser]);
+      const uniqueUser = {
+        ...newUser,
+        id: Math.max(...users.map(u => u.id)) + 1,
+        isLocal: true
+      };
+      const updatedUsers = [...users, uniqueUser];
+      setUsers(updatedUsers.sort((a, b) => a.id - b.id));
       setShowAddForm(false);
       setFormData({});
-      alert('User added successfully!');
+      setToast({ show: true, message: 'User added successfully!', type: 'success' });
     } catch (err) {
-      alert('Failed to add user');
+      setToast({ show: true, message: 'Failed to add user', type: 'error' });
       console.error(err);
     }
   };
@@ -125,10 +149,10 @@ const UserList = () => {
         <h2>Users Management</h2>
         <div className="header-actions">
           <button onClick={() => setShowAddForm(true)} className="btn-add">
-            <FaPlus /> Add New User
+            <FaPlus style={{ marginRight: '0.5rem' }} /> Add New User
           </button>
           <Link to="/" className="btn-back">
-            <IoArrowBack /> Back to Home</Link>
+            <IoArrowBack style={{ marginRight: '0.4rem' }} /> Back to Home</Link>
         </div>
       </div>
 
@@ -148,7 +172,7 @@ const UserList = () => {
               className="clear-search"
               aria-label="Clear search"
             >
-              <LiaTimesSolid/>
+              <LiaTimesSolid />
             </button>
           )}
         </div>
@@ -158,7 +182,7 @@ const UserList = () => {
             {filteredUsers.length === 0 && ' - Try different keywords'}
           </div>
         )}
-    </div>
+      </div>
 
       {showAddForm && (
         <div className="add-form">
@@ -253,10 +277,10 @@ const UserList = () => {
                     {editingUser === user.id ? (
                       <>
                         <button onClick={() => handleUpdate(user.id)} className="btn-save">
-                          💾 Save
+                          <FaSave /> Save
                         </button>
                         <button onClick={handleCancel} className="btn-cancel">
-                          ❌ Cancel
+                          <FaTimes /> Cancel
                         </button>
                       </>
                     ) : (
@@ -275,6 +299,22 @@ const UserList = () => {
             )}
           </tbody>
         </table>
+        <Modal
+          isOpen={deleteModal.isOpen}
+          title="Delete User"
+          message={`Are you sure you want to delete ${users.find(u => u.id === deleteModal.userId)?.name}? This action cannot be undone.`}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteModal({ isOpen: false, userId: null })}
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
+        {toast?.show && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        )}
       </div>
     </div>
   );

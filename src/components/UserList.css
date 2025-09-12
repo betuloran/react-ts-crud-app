@@ -71,12 +71,27 @@
 .add-form input,
 .add-form select {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
   margin-bottom: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
   font-size: 1rem;
-  transition: border-color 0.3s ease;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.add-form select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+}
+
+.add-form input:hover,
+.add-form select:hover {
+  border-color: #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
 }
 
 .add-form input:focus,
@@ -134,10 +149,19 @@
 
 .user-table td input {
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.3rem 0.5rem;
+  height: 28px;
+  margin: 0;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 0.9rem;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.user-table td input:hover {
+  border-color: #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
 }
 
 .user-table td input:focus {
@@ -158,16 +182,6 @@
   text-decoration: underline;
 }
 
-.actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.actions button {
-  padding: 0.4rem 0.8rem;
-  font-size: 0.85rem;
-}
-
 .search-section {
   background: #f8f9fa;
   padding: 1rem;
@@ -185,7 +199,7 @@
 
 .search-icon {
   position: absolute;
-  left: 1rem;
+  left: 0.1rem;
   color: #999;
   font-size: 1rem;
   pointer-events: none;

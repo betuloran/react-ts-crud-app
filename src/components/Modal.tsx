@@ -1,5 +1,4 @@
 import './Modal.css';
-
 interface ModalProps {
   isOpen: boolean;
   title: string;
@@ -10,11 +9,11 @@ interface ModalProps {
   cancelText?: string;
 }
 
-const Modal = ({ 
-  isOpen, 
-  title, 
-  message, 
-  onConfirm, 
+const Modal = ({
+  isOpen,
+  title,
+  message,
+  onConfirm,
   onCancel,
   confirmText = 'Delete',
   cancelText = 'Cancel'
